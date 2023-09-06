@@ -1,139 +1,79 @@
-# Jupyter Docker Stacks
+#  取得 Jupyter docker-stack 倉庫
 
-[![GitHub actions badge](https://github.com/jupyter/docker-stacks/actions/workflows/docker.yml/badge.svg)](https://github.com/jupyter/docker-stacks/actions/workflows/docker.yml "Docker images build status")
-[![Read the Docs badge](https://img.shields.io/readthedocs/jupyter-docker-stacks.svg)](https://jupyter-docker-stacks.readthedocs.io/en/latest/ "Documentation build status")
-[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/jupyter/docker-stacks/main.svg)](https://results.pre-commit.ci/latest/github/jupyter/docker-stacks/main "pre-commit.ci build status")
-[![Discourse badge](https://img.shields.io/discourse/users.svg?color=%23f37626&server=https%3A%2F%2Fdiscourse.jupyter.org)](https://discourse.jupyter.org/ "Jupyter Discourse Forum")
-[![Binder badge](https://static.mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jupyter/docker-stacks/main?urlpath=lab/tree/README.ipynb "Launch a jupyter/base-notebook container on mybinder.org")
+從 github 下載 Jupyter docker-stack 的倉庫
 
-Jupyter Docker Stacks are a set of ready-to-run [Docker images](https://hub.docker.com/u/jupyter) containing Jupyter applications and interactive computing tools.
-You can use a stack image to do any of the following (and more):
+```
+$ git clone https://github.com/jupyter/docker-stacks.git
+$ cd docker-stacks
+```
 
-- Start a personal Jupyter Server with the JupyterLab frontend (default)
-- Run JupyterLab for a team using JupyterHub
-- Start a personal Jupyter Server with the Jupyter Notebook frontend in a local Docker container
-- Write your own project Dockerfile
+# 編譯 Docker Image
 
-## Quick Start
+打包自訂 spark 版本的 docker container
 
-You can try a [relatively recent build of the jupyter/base-notebook image on mybinder.org](https://mybinder.org/v2/gh/jupyter/docker-stacks/main?urlpath=lab/tree/README.ipynb)
-by simply clicking the preceding link.
-Otherwise, the examples below may help you get started if you [have Docker installed](https://docs.docker.com/get-docker/),
-know [which Docker image](https://jupyter-docker-stacks.readthedocs.io/en/latest/using/selecting.html) you want to use
-and want to launch a single Jupyter Application in a container.
-
-The [User Guide on ReadTheDocs](https://jupyter-docker-stacks.readthedocs.io/en/latest/) describes additional uses and features in detail.
-
-### Example 1
-
-This command pulls the `jupyter/scipy-notebook` image tagged `2023-08-19` from Docker Hub if it is not already present on the local host.
-It then starts a container running a Jupyter Server with the JupyterLab frontend and exposes the container's internal port `8888` to port `10000` of the host machine:
+需注意 --build-arg 的參數，後續要使用 Hadoop 所以這邊需要安裝 openjdk 8
 
 ```bash
-docker run -p 10000:8888 jupyter/scipy-notebook:2023-08-19
+$ docker build --rm --force-rm \
+    -t jupyter/pyspark-notebook:spark-3.4.1 ./images/pyspark-notebook \
+    --build-arg spark_version=3.4.1 \
+    --build-arg hadoop_version=3 \
+    --build-arg spark_checksum=5a21295b4c3d1d3f8fc85375c711c7c23e3eeb3ec9ea91778f149d8d321e3905e2f44cf19c69a28df693cffd536f7316706c78932e7e148d224424150f18b2c5   \
+    --build-arg openjdk_version=8
 ```
 
-You can modify the port on which the container's port is exposed by [changing the value of the `-p` option](https://docs.docker.com/engine/reference/run/#expose-incoming-ports) to `-p 8888:8888`.
+# 啟動 Jupyter Container
 
-Visiting `http://<hostname>:10000/?token=<token>` in a browser loads JupyterLab,
-where:
+執行 Jupyter Container 
 
-- `hostname` is the name of the computer running Docker
-- `token` is the secret token printed in the console.
-
-The container remains intact for restart after the Server exits.
-
-### Example 2
-
-This command pulls the `jupyter/datascience-notebook` image tagged `2023-08-19` from Docker Hub if it is not already present on the local host.
-It then starts an _ephemeral_ container running a Jupyter Server with the JupyterLab frontend and exposes the server on host port 10000.
+- 8888 : notebook
+- 4040,4041 : spark
 
 ```bash
-docker run -it --rm -p 10000:8888 -v "${PWD}":/home/jovyan/work jupyter/datascience-notebook:2023-08-19
+$ docker run --name jupyter -d -p 8888:8888 -p 4040:4040 -p 4041:4041 jupyter/pyspark-notebook:spark-3.4.1
 ```
 
-The use of the `-v` flag in the command mounts the current working directory on the host (`${PWD}` in the example command) as `/home/jovyan/work` in the container.
-The server logs appear in the terminal.
+# 初次登入 Jupyter
 
-Visiting `http://<hostname>:10000/?token=<token>` in a browser loads JupyterLab.
+打開瀏覽器訪問 http://{主機IP}:8888，第一次登入會要求輸入 token
 
-Due to the usage of [the flag `--rm`](https://docs.docker.com/engine/reference/run/#clean-up---rm) Docker automatically cleans up the container and removes the file
-system when the container exits, but any changes made to the `~/work` directory and its files in the container will remain intact on the host.
-[The `-it` flag](https://docs.docker.com/engine/reference/commandline/run/#name) allocates pseudo-TTY.
+在終端機使用以下面另可取得 Jupyter Token
 
-```{note}
-By default, [jupyter's root_dir](https://jupyter-server.readthedocs.io/en/latest/other/full-config.html) is `/home/jovyan`.
-So, new notebooks will be saved there, unless you change the directory in the file browser.
-
-To change the default directory, you will need to specify `ServerApp.root_dir` by adding this line to previous command: `start-notebook.sh --ServerApp.root_dir=/home/jovyan/work`.
+```bash
+$ docker exec jupyter jupyter server list |grep token | cut -d'=' -f2 | cut -d' ' -f1
+15e0973d14a97c37fc8613538e476a354b3b32432bb2fdf1
 ```
 
-## Contributing
+# Pyspark 範例 : 1 + 2 + ... + 100 
 
-Please see the [Contributor Guide on ReadTheDocs](https://jupyter-docker-stacks.readthedocs.io/en/latest/)
-for information about how to contribute recipes, features, tests, and community maintained stacks.
+## Local Mode
 
-## Maintainer Help Wanted
+```python
+from pyspark.sql import SparkSession
 
-We value all positive contributions to the Docker stacks project,
-from [bug reports](https://jupyter-docker-stacks.readthedocs.io/en/latest/contributing/issues.html)
-to [pull requests](https://jupyter-docker-stacks.readthedocs.io/en/latest/contributing/features.html#submitting-a-pull-request)
-to help with answering questions.
-We'd also like to invite members of the community to help with two maintainer activities:
+# Spark session & context
+spark = SparkSession.builder.master("local").getOrCreate()
+sc = spark.sparkContext
 
-- **Issue triaging**: Reading and providing a first response to issues, labeling issues appropriately,
-  redirecting cross-project questions to Jupyter Discourse
-- **Pull request reviews**: Reading proposed documentation and code changes, working with the submitter
-  to improve the contribution, deciding if the contribution should take another form (e.g., a recipe
-  instead of a permanent change to the images)
+# Sum of the first 100 whole numbers
+rdd = sc.parallelize(range(100 + 1))
+rdd.sum()
+#5050
+```
 
-Anyone in the community can jump in and help with these activities anytime.
-We will happily grant additional permissions (e.g., the ability to merge PRs) to anyone who shows an ongoing interest in working on the project.
+## Standalone Mode
 
-## Choosing Jupyter frontend
+```python
+from pyspark.sql import SparkSession
 
-JupyterLab is the default for all the Jupyter Docker Stacks images.
-It is still possible to switch back to Jupyter Notebook (or to launch a different startup command).
-You can achieve this by passing the environment variable `DOCKER_STACKS_JUPYTER_CMD=notebook` (or any other valid `jupyter` subcommand) at container startup;
-more information is available in the [documentation](https://jupyter-docker-stacks.readthedocs.io/en/latest/using/common.html#alternative-commands).
+# Spark session & context
+spark = SparkSession.builder.master("spark://master:7077").getOrCreate()
+sc = spark.sparkContext
 
-## Alternatives
+# Sum of the first 100 whole numbers
+rdd = sc.parallelize(range(100 + 1))
+rdd.sum()
+# 5050
+```
 
-- [jupyter/repo2docker](https://github.com/jupyterhub/repo2docker) - Turn git repositories into
-  Jupyter-enabled Docker Images
-- [openshift/source-to-image](https://github.com/openshift/source-to-image) - A tool for
-  building artifacts from source and injecting them into docker images
-- [jupyter-on-openshift/jupyter-notebooks](https://github.com/jupyter-on-openshift/jupyter-notebooks) -
-  OpenShift compatible S2I builder for basic notebook images
-
-## Resources
-
-- [Documentation on ReadTheDocs](https://jupyter-docker-stacks.readthedocs.io/en/latest/)
-- [Issue Tracker on GitHub](https://github.com/jupyter/docker-stacks/issues)
-- [Jupyter Discourse Forum](https://discourse.jupyter.org/)
-- [Jupyter Website](https://jupyter.org)
-- [Images on Docker Hub](https://hub.docker.com/u/jupyter)
-
-## CPU Architectures
-
-- We publish containers for both `x86_64` and `aarch64` platforms
-- Single-platform images have either `aarch64-` or `x86_64-` tag prefixes, for example, `jupyter/base-notebook:aarch64-python-3.10.5`
-- Starting from `2022-09-21`, we create multi-platform images (except `tensorflow-notebook`)
-- Starting from `2023-08-19`, we create multi-platform `tensorflow-notebook` image as well
-
-## Using old images
-
-This project only builds one set of images at a time.
-If you want to use older `Ubuntu` and/or `python` version, you can use following images:
-
-| Build Date   | Ubuntu | Python | Tag            |
-| ------------ | ------ | ------ | -------------- |
-| 2022-10-09   | 20.04  | 3.7    | `1aac87eb7fa5` |
-| 2022-10-09   | 20.04  | 3.8    | `a374cab4fcb6` |
-| 2022-10-09   | 20.04  | 3.9    | `5ae537728c69` |
-| 2022-10-09   | 20.04  | 3.10   | `f3079808ca8c` |
-| 2022-10-09   | 22.04  | 3.7    | `b86753318aa1` |
-| 2022-10-09   | 22.04  | 3.8    | `7285848c0a11` |
-| 2022-10-09   | 22.04  | 3.9    | `ed2908bbb62e` |
-| 2023-05-30   | 22.04  | 3.10   | `4d70cf8da953` |
-| weekly build | 22.04  | 3.11   | `latest`       |
+>>>>>>> d82848cdabb3ec4e219d2e655a465994688411c4
