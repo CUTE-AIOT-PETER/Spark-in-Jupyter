@@ -15,10 +15,10 @@ $ cd docker-stacks
 
 ```bash
 $ docker build --rm --force-rm \
-    -t jupyter/pyspark-notebook:spark-3.4.1 ./images/pyspark-notebook \
-    --build-arg spark_version=3.4.1 \
-    --build-arg hadoop_version=3 \
-    --build-arg spark_checksum=5a21295b4c3d1d3f8fc85375c711c7c23e3eeb3ec9ea91778f149d8d321e3905e2f44cf19c69a28df693cffd536f7316706c78932e7e148d224424150f18b2c5   \
+    -t jupyter/pyspark-notebook:spark-3.2.4 ./images/pyspark-notebook \
+    --build-arg spark_version=3.2.4 \
+    --build-arg hadoop_version=3.2 \
+    --build-arg spark_checksum=b2a49b5b1f764131e61abbd0ae161c8b8541b3636b585b727d03674f2502465f940e5ef2d4dff0c0060bc61184c747ca4ea9145bde74d62ec2e9f281e82408b7 \
     --build-arg openjdk_version=8
 ```
 
@@ -30,7 +30,7 @@ $ docker build --rm --force-rm \
 - 4040,4041 : spark
 
 ```bash
-$ docker run --name jupyter -d -p 8888:8888 -p 4040:4040 -p 4041:4041 jupyter/pyspark-notebook:spark-3.4.1
+$ docker run --net=host --name jupyter -d jupyter_volume:/home/bigred/jupyter_run -p 8888:8888 -p 4040:4040 -p 4041:4041 jupyter/pyspark-notebook:spark-3.2.4
 ```
 
 # 初次登入 Jupyter
