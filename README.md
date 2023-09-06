@@ -3,7 +3,7 @@
 從 github 下載 Jupyter docker-stack 的倉庫
 
 ```
-$ git clone https://github.com/jupyter/docker-stacks.git
+$ git clone https://github.com/CUTE-AIOT-PETER/SparkinJupyter.git
 $ cd docker-stacks
 ```
 
