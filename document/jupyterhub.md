@@ -1,3 +1,7 @@
+# Jupyter - Default Spawner 
+
+建立 jupyterhub_config.py 設定檔
+
 ```bash
 $ nano jupyterhub_config.py
 ...
