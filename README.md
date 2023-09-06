@@ -75,5 +75,3 @@ rdd = sc.parallelize(range(100 + 1))
 rdd.sum()
 # 5050
 ```
-
->>>>>>> d82848cdabb3ec4e219d2e655a465994688411c4
