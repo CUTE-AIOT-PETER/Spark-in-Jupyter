@@ -15,11 +15,12 @@ USER root
 # Spark dependencies
 # Default values can be overridden at build time
 # (ARGS are in lower case to distinguish them from ENV)
-ARG spark_version="3.4.1"
-ARG hadoop_version="3"
+ARG spark_version="3.2.4"
+ARG hadoop_version="3.2"
 ARG scala_version
 ARG spark_checksum="5a21295b4c3d1d3f8fc85375c711c7c23e3eeb3ec9ea91778f149d8d321e3905e2f44cf19c69a28df693cffd536f7316706c78932e7e148d224424150f18b2c5"
 ARG openjdk_version="17"
+ARG HADOOP_HOME=/opt/hadoop-3.3.6
 
 ENV APACHE_SPARK_VERSION="${spark_version}" \
     HADOOP_VERSION="${hadoop_version}"
@@ -74,5 +75,35 @@ RUN mamba install --yes \
     fix-permissions "${CONDA_DIR}" && \
     fix-permissions "/home/${NB_USER}"
 
+
+ENV HADOOP_HOME=/opt/hadoop-3.3.6 \
+    HADOOP_LOG_DIR=/tmp \
+    HADOOP_CONF_DIR=$HADOOP_HOME/etc/hadoop/ \
+    LD_LIBRARY_PATH=$HADOOP_HOME/lib/native/ \
+    HADOOP_COMMON_LIB_NATIVE_DIR=$HADOOP_HOME/lib/native \
+    HADOOP_OPTS="-Djava.library.path=$HADOOP_HOME/lib/native" \
+    HADOOP_MAPRED_LOG_DIR="/tmp/jhslog" \
+    YARN_HOME=$HADOOP_HOME \
+    HADOOP_YARN_HOME=$HADOOP_HOME \
+    YARN_LOG_DIR=/tmp \
+    HADOOP_ROOT_LOGGER="WARN,console" \
+    PATH=/opt/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+    PATH="${PATH}:${HADOOP_HOME}/bin:$HADOOP_HOME/sbin:$PIG_HOME/bin:$HIVE_HOME/bin \
+    ANACONDA_ROOT=/opt/conda \
+    PATH="${PATH}:$ANACONDA_ROOT/bin \
+    PYSPARK_PYTHON=$ANACONDA_ROOT/bin/python3
+
+USER root
+
+    # 建立管理者帳號 bigred
+RUN groupadd bigboss && echo '%bigboss ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers && \
+    useradd -m -s /bin/bash bigred && echo 'bigred:bigred' | chpasswd && \
+    usermod -a -G bigboss bigred 
+
+COPY opt/hadoop-3.3.6 /opt/hadoop-3.3.6
+COPY opt/spark-3.2.4-bin-hadoop3.2 /usr/local/spark-3.2.4-bin-hadoop3.2
+
+USER ${NB_UID}
 WORKDIR "${HOME}"
+
 EXPOSE 4040
