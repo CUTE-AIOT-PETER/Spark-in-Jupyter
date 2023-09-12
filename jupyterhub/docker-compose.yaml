@@ -1,0 +1,18 @@
+version: '3'
+services:
+  jupyterhub:
+    image: jupyterhub
+    container_name: jupyterhub
+    volumes:
+      - ./jupyterhub_config.py:/etc/jupyterhub/jupyterhub_config.py
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: jupyterhub -f /etc/jupyterhub/jupyterhub_config.py
+    ports:
+      - 8000:8000
+      - 8081:8081
+    networks:
+      - jupyterhub_network
+networks:
+  jupyterhub_network:
+    name: jupyterhub
+    external: true
