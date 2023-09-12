@@ -1,4 +1,4 @@
-# 產生 Jupyter Hub 設定檔範本
+# Jupyter Hub 
 
 ## Reference
 
@@ -23,7 +23,12 @@ JupyterNotebook 4.0.2
 
 ```bash
 $ docker build -t jupyterhub .
-$ docker-compose up -d
+```
+
+建立 JupyterHub 專用的 docker netwrok
+
+```bash
+docker create netwrok jupyterhub
 ```
 
 啟動 jupyterhub
