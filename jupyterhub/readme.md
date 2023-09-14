@@ -25,10 +25,10 @@ JupyterNotebook 4.0.2
 $ docker build -t jupyterhub .
 ```
 
-建立 JupyterHub 專用的 docker netwrok
+建立 JupyterHub 專用的 docker network
 
 ```bash
-docker create netwrok jupyterhub
+docker network create jupyterhub
 ```
 
 啟動 jupyterhub
